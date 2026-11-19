@@ -4,23 +4,10 @@ using CommunityToolkit.Mvvm.Input;
 
 namespace Recipes.Client.Core.ViewModels;
 
-public class RecipeListItemViewModel
-{
-    public string Id { get; }
-    public string Title { get; }
-    public bool IsFavorite { get; }
-
-    public RecipeListItemViewModel(string id, string title, bool isFavorite)
-    {
-        Id = id;
-        Title = title;
-        IsFavorite = isFavorite;
-    }
-}
-
 public class RecipesOverviewViewModel : ObservableObject
 {
-    private const int NumberOfRecipes = 20;
+    private const int NumberOfDemoRecipes = 20;
+    private const int DeselectDelayInMilliseconds = 300;
 
     private static readonly string[] DemoTitles =
     {
@@ -28,27 +15,17 @@ public class RecipesOverviewViewModel : ObservableObject
         "Pancakes", "Tomato Soup", "Risotto", "Falafel", "Apple Pie"
     };
 
+    private RecipeListItemViewModel? _selectedRecipe;
+    private string _newRecipeTitle = "";
+    private string _statusMessage = "";
 
     public ObservableCollection<RecipeListItemViewModel> Recipes { get; } = new();
-
-
-    private RecipeListItemViewModel? _selectedRecipe;
 
     public RecipeListItemViewModel? SelectedRecipe
     {
         get => _selectedRecipe;
         set => SetProperty(ref _selectedRecipe, value);
     }
-
-    private string _statusMessage = "";
-
-    public string StatusMessage
-    {
-        get => _statusMessage;
-        private set => SetProperty(ref _statusMessage, value);
-    }
-
-    private string _newRecipeTitle = "";
 
     public string NewRecipeTitle
     {
@@ -60,38 +37,24 @@ public class RecipesOverviewViewModel : ObservableObject
         }
     }
 
+    public string StatusMessage
+    {
+        get => _statusMessage;
+        private set => SetProperty(ref _statusMessage, value);
+    }
+
     public IAsyncRelayCommand NavigateToSelectedDetailCommand { get; }
     public IRelayCommand AddRecipeCommand { get; }
     public IRelayCommand<RecipeListItemViewModel> RemoveRecipeCommand { get; }
 
     public RecipesOverviewViewModel()
     {
-        AddRecipes();
-        UpdateStatus();
-
         NavigateToSelectedDetailCommand = new AsyncRelayCommand(NavigateToSelectedDetail);
-        AddRecipeCommand = new RelayCommand(AddRecipe, () => !string.IsNullOrWhiteSpace(NewRecipeTitle));
+        AddRecipeCommand = new RelayCommand(AddRecipe, CanAddRecipe);
         RemoveRecipeCommand = new RelayCommand<RecipeListItemViewModel>(RemoveRecipe);
-    }
 
-    private void AddRecipe()
-    {
-        var title = NewRecipeTitle.Trim();
-        if (Recipes.Any(r => r.Title == title))
-            return;
-
-        Recipes.Add(new RecipeListItemViewModel(id: Guid.NewGuid().ToString(), title: title, isFavorite: false));
-        NewRecipeTitle = "";
-        UpdateStatus();
-    }
-
-    private void RemoveRecipe(RecipeListItemViewModel? recipe)
-    {
-        if (recipe is null)
-            return;
-
-        Recipes.Remove(recipe);
-        UpdateStatus();
+        LoadDemoRecipes();
+        UpdateStatusMessage();
     }
 
     private async Task NavigateToSelectedDetail()
@@ -101,21 +64,44 @@ public class RecipesOverviewViewModel : ObservableObject
 
         StatusMessage = $"You picked \"{SelectedRecipe.Title}\"";
 
-        await Task.Delay(300);
-
-
+        await Task.Delay(DeselectDelayInMilliseconds);
         SelectedRecipe = null;
     }
 
-    private void AddRecipes()
+    private bool CanAddRecipe() => !string.IsNullOrWhiteSpace(NewRecipeTitle);
+
+    private void AddRecipe()
     {
-        for (var i = 0; i < NumberOfRecipes; i++)
+        var title = NewRecipeTitle.Trim();
+        if (Recipes.Any(recipe => recipe.Title == title))
+            return;
+
+        Recipes.Add(new RecipeListItemViewModel(Guid.NewGuid().ToString(), title, isFavorite: false));
+        NewRecipeTitle = "";
+        UpdateStatusMessage();
+    }
+
+    private void RemoveRecipe(RecipeListItemViewModel? recipe)
+    {
+        if (recipe is null)
+            return;
+
+        Recipes.Remove(recipe);
+        UpdateStatusMessage();
+    }
+
+    private void LoadDemoRecipes()
+    {
+        for (var i = 0; i < NumberOfDemoRecipes; i++)
         {
-            var title = $"{DemoTitles[i % DemoTitles.Length]} #{i + 1}";
-            Recipes.Add(new RecipeListItemViewModel(id: $"recipe-{i + 1}", title: title, isFavorite: i % 3 == 0));
+            var number = i + 1;
+            var title = $"{DemoTitles[i % DemoTitles.Length]} #{number}";
+            var isFavorite = i % 3 == 0;
+
+            Recipes.Add(new RecipeListItemViewModel($"recipe-{number}", title, isFavorite));
         }
     }
 
-    private void UpdateStatus()
+    private void UpdateStatusMessage()
         => StatusMessage = $"{Recipes.Count} recipes loaded";
 }

@@ -8,49 +8,7 @@ public class RecipesOverviewPage : ContentPage
     {
         Title = "Recipes";
 
-
-        var collectionView = new CollectionView
-        {
-            SelectionMode = SelectionMode.Single,
-            ItemTemplate = new DataTemplate(CreateRecipeRow),
-            EmptyView = "No recipes"
-        };
-
-        collectionView.SetBinding(ItemsView.ItemsSourceProperty,
-            nameof(RecipesOverviewViewModel.Recipes));
-
-
-        collectionView.SetBinding(SelectableItemsView.SelectedItemProperty,
-            nameof(RecipesOverviewViewModel.SelectedRecipe), BindingMode.TwoWay);
-        collectionView.SetBinding(SelectableItemsView.SelectionChangedCommandProperty,
-            nameof(RecipesOverviewViewModel.NavigateToSelectedDetailCommand));
-
-        var statusLabel = new Label
-        {
-            Padding = new Thickness(15, 10),
-            FontAttributes = FontAttributes.Italic,
-            MaxLines = 1,
-            LineBreakMode = LineBreakMode.TailTruncation
-        };
-        statusLabel.SetBinding(Label.TextProperty, nameof(RecipesOverviewViewModel.StatusMessage));
-
-        var newRecipeEntry = new Entry { Placeholder = "New recipe" };
-        newRecipeEntry.SetBinding(Entry.TextProperty,
-            nameof(RecipesOverviewViewModel.NewRecipeTitle), BindingMode.TwoWay);
-
-        var addButton = new Button { Text = "Add" };
-        addButton.SetBinding(Button.CommandProperty, nameof(RecipesOverviewViewModel.AddRecipeCommand));
-
-        var addRow = new Grid
-        {
-            Padding = new Thickness(15, 5),
-            ColumnSpacing = 10,
-            ColumnDefinitions = { new ColumnDefinition(GridLength.Star), new ColumnDefinition(GridLength.Auto) }
-        };
-        addRow.Add(newRecipeEntry, column: 0);
-        addRow.Add(addButton, column: 1);
-
-        var grid = new Grid
+        var layout = new Grid
         {
             RowDefinitions =
             {
@@ -59,23 +17,85 @@ public class RecipesOverviewPage : ContentPage
                 new RowDefinition(GridLength.Star)
             }
         };
-        grid.Add(addRow, column: 0, row: 0);
-        grid.Add(statusLabel, column: 0, row: 1);
-        grid.Add(collectionView, column: 0, row: 2);
-        Content = grid;
+        layout.Add(CreateAddRecipeRow(), column: 0, row: 0);
+        layout.Add(CreateStatusLabel(), column: 0, row: 1);
+        layout.Add(CreateRecipeList(), column: 0, row: 2);
 
+        Content = layout;
         BindingContext = new RecipesOverviewViewModel();
     }
 
+    private static View CreateAddRecipeRow()
+    {
+        var titleEntry = new Entry { Placeholder = "New recipe" };
+        titleEntry.SetBinding(Entry.TextProperty,
+            nameof(RecipesOverviewViewModel.NewRecipeTitle), BindingMode.TwoWay);
+
+        var addButton = new Button { Text = "Add" };
+        addButton.SetBinding(Button.CommandProperty,
+            nameof(RecipesOverviewViewModel.AddRecipeCommand));
+
+        var row = new Grid
+        {
+            Padding = new Thickness(15, 5),
+            ColumnSpacing = 10,
+            ColumnDefinitions =
+            {
+                new ColumnDefinition(GridLength.Star),
+                new ColumnDefinition(GridLength.Auto)
+            }
+        };
+        row.Add(titleEntry, column: 0);
+        row.Add(addButton, column: 1);
+        return row;
+    }
+
+    private static View CreateStatusLabel()
+    {
+        var statusLabel = new Label
+        {
+            Padding = new Thickness(15, 10),
+            FontAttributes = FontAttributes.Italic,
+            MaxLines = 1,
+            LineBreakMode = LineBreakMode.TailTruncation
+        };
+        statusLabel.SetBinding(Label.TextProperty,
+            nameof(RecipesOverviewViewModel.StatusMessage));
+        return statusLabel;
+    }
+
+    private static View CreateRecipeList()
+    {
+        var recipeList = new CollectionView
+        {
+            SelectionMode = SelectionMode.Single,
+            ItemTemplate = new DataTemplate(CreateRecipeRow),
+            EmptyView = "No recipes"
+        };
+        recipeList.SetBinding(ItemsView.ItemsSourceProperty,
+            nameof(RecipesOverviewViewModel.Recipes));
+        recipeList.SetBinding(SelectableItemsView.SelectedItemProperty,
+            nameof(RecipesOverviewViewModel.SelectedRecipe), BindingMode.TwoWay);
+        recipeList.SetBinding(SelectableItemsView.SelectionChangedCommandProperty,
+            nameof(RecipesOverviewViewModel.NavigateToSelectedDetailCommand));
+        return recipeList;
+    }
 
     private static View CreateRecipeRow()
     {
-        var titleLabel = new Label { FontSize = 16, VerticalOptions = LayoutOptions.Center };
-        titleLabel.SetBinding(Label.TextProperty, nameof(RecipeListItemViewModel.Title), BindingMode.OneTime);
-
         var favoriteLabel = new Label
-            { Text = "★", TextColor = Colors.Orange, FontSize = 18, VerticalOptions = LayoutOptions.Center };
-        favoriteLabel.SetBinding(IsVisibleProperty, nameof(RecipeListItemViewModel.IsFavorite), BindingMode.OneTime);
+        {
+            Text = "★",
+            TextColor = Colors.Orange,
+            FontSize = 18,
+            VerticalOptions = LayoutOptions.Center
+        };
+        favoriteLabel.SetBinding(IsVisibleProperty,
+            nameof(RecipeListItemViewModel.IsFavorite), BindingMode.OneTime);
+
+        var titleLabel = new Label { FontSize = 16, VerticalOptions = LayoutOptions.Center };
+        titleLabel.SetBinding(Label.TextProperty,
+            nameof(RecipeListItemViewModel.Title), BindingMode.OneTime);
 
         var removeButton = new Button { Text = "✕", WidthRequest = 44, Padding = 0 };
         removeButton.SetBinding(Button.CommandProperty, new Binding(
