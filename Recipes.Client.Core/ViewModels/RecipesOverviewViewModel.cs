@@ -6,7 +6,7 @@ namespace Recipes.Client.Core.ViewModels;
 
 public class RecipesOverviewViewModel : ObservableObject
 {
-    private const int NumberOfDemoRecipes = 20;
+    private const int NumberOfDemoRecipes = 2000;
     private const int DeselectDelayInMilliseconds = 300;
 
     private static readonly string[] DemoTitles =

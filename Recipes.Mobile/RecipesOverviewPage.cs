@@ -4,6 +4,7 @@ namespace Recipes.Mobile;
 
 public class RecipesOverviewPage : ContentPage
 {
+    // Konstruktor der Seite
     public RecipesOverviewPage()
     {
         Title = "Recipes";
